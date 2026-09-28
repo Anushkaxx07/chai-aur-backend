@@ -6,8 +6,10 @@ class ApiError extends Error{
         //error stack
         stack=""
     ){
-        //overwrite
+        //parent class Error ka constructor chaloa and 
+        //ye msg send krdo
         super(message)
+        //now we can acess the inherited props and change it
         this.statusCode=statusCode
         this.data=null
         this.message=message
