@@ -1,12 +1,16 @@
-
+//higher order function
 const asyncHandler = (requestHandler) => {
-    (req,res,next)=>{
-        Promise.resolve(requestHandler(req,res,next)).
-        reject((err)=>next(err))
-    }
-}
 
-export  {asyncHandler}
+    return (req, res, next) => {
+
+        Promise
+            .resolve(requestHandler(req, res, next))
+            .catch((err) => next(err));
+
+    };
+};
+
+export { asyncHandler };
 
 
 //function ko ek aur function m pass kr diya

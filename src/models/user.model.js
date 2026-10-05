@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema
             trim:true,
             index:true,
         },
-        avator:{
+        avatar:{
             //cloudinary
             type:String, 
             required:true,
@@ -55,10 +55,10 @@ const userSchema = new mongoose.Schema
 //arrow function mt use kro kyuki this ni milta usse toh 
 //schema ka ref ni mil paega 
 //next use kro kyuki middleware h 
-userSchema.pre("save",async function(next){
-    if(!this.isModified("password")) return next()
-    this.password=bcrypt.hash(this.password,10)
-    next()
+userSchema.pre("save",async function(){
+    if(!this.isModified("password")) return;
+    this.password=await bcrypt.hash(this.password,10)
+
 })
 //custom method design
 userSchema.methods.isPasswordCorrect=async function(password){

@@ -25,6 +25,18 @@ app.use(express.static("public"))
 
 //secure cookie
 app.use(cookieParser())
+//route import
+import userRouter from './routes/user.routes.js'
 
 
+
+
+//route declare we follow good practice
+//route and controller alag jagah toh router ko lane k liye middleware lana padega
+
+// /api ka mtlb ye ek api h /v1 mtlb ye abhi iska version 1 hai and /users mtlb user se aane wale request
+
+app.use("/api/v1/users",userRouter)
+
+//localhost:8000/api/v1/users/register
 export { app }
