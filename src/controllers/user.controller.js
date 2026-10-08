@@ -3,6 +3,19 @@ import {ApiError} from '../utils/ApiError.js'
 import {User} from "../models/user.model.js"
 import { uploadOnCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+const generateAccessandRefreshTokens=async(userId)=>{
+    try {
+        const user=await User.findById(userId);
+        const accessToken=user.generateAccessToken();
+        const refreshToken=user.generateRefreshToken();
+        //refresh token in db
+        user.refreshToken=refreshToken
+        await user.save({validateBeforeSave:false})
+        return {accessToken,refreshToken};
+    } catch (error) {
+        throw new ApiError(500,"Something went wrong while generating refresh and access token")
+    }
+}
 const registerUser=asyncHandler(async (req,res)=>{
 
     //user se detail lenge kya data lena h voh model se lenge
@@ -87,7 +100,102 @@ const registerUser=asyncHandler(async (req,res)=>{
         
     )
 })
+
+const loginUser=asyncHandler(async(req,res)=>{
+    //my  steps
+    /*
+    step 1.User se email,username aur password lena h
+    step 2.Validate karane h password ki user register h ya ni
+    step3. If not registered then signup pe bhejna
+    step4. If register h toh login karana h ek token generate karana h
+    step5. Access token and refresh token dono generate honge
+    step6. User ka token agar shi h toh usse hme home page pe redirect karna
+     */
+
+    //sir steps
+    /*
+    req body se data le aao
+    username or email check krna 
+    find the user 
+    password check
+    access and refresh token generate
+    token send in cookies
+    Send a response that login is successful
+     */
+    const {email,password,fullName,username}=req.body;
+    if(!username || !email){
+        throw new ApiError(400,"Username or email is required");
+    }
+    const user=await User.findOne({
+       $or: [{ username } , { email }]
+    });
+    if(!user){
+        throw new ApiError(404,"User does not exist");
+    }
+    const isCorrect=await user.isPasswordCorrect(password);
+    if(!isCorrect){
+        throw new ApiError(401,"Password is incorrect");
+    }
+    const {accessToken,refreshToken}=await 
+    generateAccessandRefreshTokens(user._id);
+
+    //ek aur baar database ko query kre ya phir ussi user jo aaya h usse update krle
+    const loggedInuser=await User.findById(user._id)
+    .select("-password -refreshToken");
+
+    const options={
+        httpOnly:true,
+        secure:true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+        new ApiResponse(200,
+            {
+                //phir refreshToken 
+                user:loggedInuser,
+                accessToken,
+                refreshToken
+            },
+            "User logged in Successfully"
+        )
+    )
+})
+const logoutUser=asyncHandler(async(req,res)=>{
+    //steps
+    /*
+    1.cookies clear
+    2.refresh token refresh krna
+     */
+    //refresh token db se hogya gayab
+    await User.findByIdAndUpdate(req.user._id,
+        {
+            $set:{
+                refreshToken:undefined
+            }
+        },
+        {
+            new:true
+        }
+
+    )
+    //cookies wala kaam
+    const options={
+        httpOnly:true,
+        secure:true
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"User Logged Out Successfully"))
+
+})
 export {
     registerUser,
+    loginUser,
+    logoutUser
 }
 
