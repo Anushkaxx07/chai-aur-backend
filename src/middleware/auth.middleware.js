@@ -11,8 +11,8 @@ export const verifyJWT=asyncHandler(async(req, _,next)=>{
     //Bearer ko replace krke "" empty kr denge and access token le lenge
 
     try {
-        const token=req.cookies?.accessToken || req.header
-        ("Authorization")?.replace("Bearer","")
+        const token=req.cookies?.accessToken || 
+        req.header("Authorization")?.replace("Bearer ","")
         if(!token){
             throw new ApiError(401,"Unauthorized Request")
         }
